@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 const API_KEY = "14e8f0bb8da91fb352ce4c9ac465b0b7";
 
@@ -10,6 +10,7 @@ function App() {
 
   const fetchWeather = async () => {
     if (!city) return;
+
     setLoading(true);
     setError("");
     try {
@@ -67,6 +68,7 @@ function App() {
       {loading && <p>Загрузка...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
+      {/* Показываем компоненты, если есть данные */}
       {weatherData && (
         <>
           <WeatherCurrent data={weatherData.current} city={city} />
@@ -77,31 +79,33 @@ function App() {
     </div>
   );
 }
+
 function WeatherCurrent({ data, city }) {
-  if (data && data.dt) {
-    const date = new Date(data.dt * 1000).toLocaleString("ru-RU", {
-      timeZone: data.timezone,
-    });
-    return (
-      <div>
-        <p>Дата: {date}</p>
-      </div>
-    );
-  } else {
+  if (!data || !data.dt) {
     return <div>Загрузка данных...</div>;
   }
+
+  const date = new Date(data.dt * 1000).toLocaleString("ru-RU", {
+    timeZone: data.timezone,
+  });
+
+  return (
+    <div>
+      <h2>Текущая погода в {city}</h2>
+      <p>Дата: {date}</p>
+      <p>Температура: {data.temp}°C</p>
+      <p>Описание: {data.weather[0].description}</p>
+      <p>Влажность: {data.humidity}%</p>
+      <p>Ветер: {data.wind_speed} м/с</p>
+    </div>
+  );
 }
-return (
-  <div>
-    <h2>Текущая погода в {city}</h2>
-    <p>{date}</p>
-    <p>Температура: {data.temp}°C</p>
-    <p>Описание: {data.weather[0].description}</p>
-    <p>Влажность: {data.humidity}%</p>
-    <p>Ветер: {data.wind_speed} м/с</p>
-  </div>
-);
+
 function HourlyForecast({ hourly }) {
+  if (!hourly) {
+    return <div>Загрузка почасовых данных...</div>;
+  }
+
   const now = Date.now() / 1000;
   const todayHours = hourly.filter(
     (h) => h.dt >= now && h.dt <= now + 24 * 3600
@@ -118,6 +122,7 @@ function HourlyForecast({ hourly }) {
               minWidth: "80px",
               padding: "10px",
               border: "1px solid #ccc",
+              marginRight: "10px",
             }}
           >
             <p>{new Date(hour.dt * 1000).getHours()}:00</p>
@@ -131,8 +136,12 @@ function HourlyForecast({ hourly }) {
 }
 
 function DailyForecast({ daily }) {
-  // Показываем прогноз на 3-5 ближайших дней
+  if (!daily || !Array.isArray(daily)) {
+    return <div>Загрузка данных...</div>;
+  }
+
   const days = daily.slice(1, 6);
+
   return (
     <div>
       <h3>Прогноз на ближайшие дни</h3>
@@ -155,4 +164,5 @@ function DailyForecast({ daily }) {
     </div>
   );
 }
+
 export default App;
